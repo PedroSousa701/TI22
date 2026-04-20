@@ -9,6 +9,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
@@ -38,15 +39,14 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
 
     private lateinit var seekBar: SeekBar
 
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
-    // 📳 SENSORES
+    // sensores
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
     private var rotationSensor: Sensor? = null
     private var lastShakeTime = 0L
 
-    // 🎚️ volume suavizado
     private var smoothVolume = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,34 +68,29 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
 
         seekBar = findViewById(R.id.seekBar)
 
-        // 📳 SENSOR MANAGER
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
-        // 🔊 click sound
         clickPlayer = MediaPlayer.create(this, R.raw.click)
 
         playSong()
 
         btnPlayPause.setOnClickListener { togglePlayPause() }
-        btnNext.setOnClickListener { nextSong() }
-        btnPrev.setOnClickListener { prevSong() }
+        btnNext.setOnClickListener { changeSong(currentIndex + 1) }
+        btnPrev.setOnClickListener { changeSong(currentIndex - 1) }
         btnBack.setOnClickListener { finish() }
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) mediaPlayer?.seekTo(progress)
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
         })
     }
 
-    // 🎵 PLAY MUSIC
     private fun playSong() {
-
         if (songs.isEmpty()) return
 
         try {
@@ -122,7 +117,7 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
                 }
 
                 setOnCompletionListener {
-                    nextSong()
+                    changeSong(currentIndex + 1)
                 }
 
                 prepareAsync()
@@ -134,16 +129,18 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ▶️ ⏸ PLAY / PAUSE
+    private fun changeSong(newIndex: Int) {
+        if (newIndex in songs.indices) {
+            currentIndex = newIndex
+            playSong()
+            updatePlayPauseButton()
+        }
+    }
+
     private fun togglePlayPause() {
         mediaPlayer?.let {
-            if (it.isPlaying) {
-                it.pause()
-                playClickSound()
-            } else {
-                it.start()
-                playClickSound()
-            }
+            if (it.isPlaying) it.pause() else it.start()
+            playClickSound()
             updatePlayPauseButton()
         }
     }
@@ -153,22 +150,6 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
             if (mediaPlayer?.isPlaying == true) R.drawable.pause
             else R.drawable.play
         )
-    }
-
-    private fun nextSong() {
-        if (currentIndex < songs.size - 1) {
-            currentIndex++
-            playSong()
-            updatePlayPauseButton()
-        }
-    }
-
-    private fun prevSong() {
-        if (currentIndex > 0) {
-            currentIndex--
-            playSong()
-            updatePlayPauseButton()
-        }
     }
 
     private fun playClickSound() {
@@ -197,13 +178,12 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
         return String.format("%d:%02d", minutes, seconds)
     }
 
-    // 📳 SENSORES
     override fun onSensorChanged(event: SensorEvent) {
 
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
-        // 🔄 ROTATION VECTOR → VOLUME
+        // ROTATION → volume
         if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
 
             val rotationMatrix = FloatArray(9)
@@ -212,20 +192,12 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
             val orientation = FloatArray(3)
             SensorManager.getOrientation(rotationMatrix, orientation)
 
-            val roll = orientation[2] // 🔥 esquerda/direita
-
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-
-            // 🎯 -90° a +90° (~ -1.57 a +1.57 rad)
+            val roll = orientation[2]
             val maxAngle = 1.57f
 
-            // 📏 normalizar roll para 0..1
             val normalized = ((roll + maxAngle) / (2 * maxAngle)).coerceIn(0f, 1f)
-
             val targetVolume = normalized * maxVol
 
-            // 🔥 suavização
             val alpha = 0.3f
             smoothVolume += alpha * (targetVolume - smoothVolume)
 
@@ -236,7 +208,7 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
             )
         }
 
-        // 📳 ACCELEROMETER → SHAKE
+        // SHAKE → play/pause
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
 
             val x = event.values[0]
@@ -260,11 +232,9 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-
         accelerometer?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
-
         rotationSensor?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
@@ -281,9 +251,9 @@ class PlayerActivity : AppCompatActivity(), SensorEventListener {
         handler.removeCallbacksAndMessages(null)
 
         mediaPlayer?.release()
-        mediaPlayer = null
-
         clickPlayer?.release()
+
+        mediaPlayer = null
         clickPlayer = null
     }
 }
