@@ -1,7 +1,100 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:orientation="vertical"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 🔙 VOLTAR -->
+    <Button
+        android:id="@+id/btnBack"
+        android:text="⬅️ Voltar"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="start"
+        android:background="@android:color/transparent"
+        android:textSize="16sp"/>
+
+    <!-- 🎵 TÍTULO -->
+    <TextView
+        android:id="@+id/txtTitle"
+        android:text="Título"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginTop="30dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <!-- ⏱️ TEMPO TOTAL -->
+    <TextView
+        android:id="@+id/txtTime"
+        android:text="0:00"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <!-- 🎚️ BARRA -->
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"/>
+
+    <!-- ⏱️ TEMPOS -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/txtCurrentTime"
+            android:text="0:00"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/txtEndTime"
+            android:text="0:00"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"/>
+    </LinearLayout>
+
+    <!-- ▶️ PLAY BUTTON (CENTRO TIPO SPOTIFY) -->
+    <ImageButton
+        android:id="@+id/btnPlayPause"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:background="@android:color/transparent"
+        android:layout_gravity="center"
+        android:src="@drawable/play"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:scaleX="0.5"
+        android:scaleY="0.5"/>
+
+    <!-- ⏮ ⏭ CONTROLOS -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center">
+
+        <Button
+            android:id="@+id/btnPrev"
+            android:text="⏮"
+            android:layout_width="70dp"
+            android:layout_height="70dp"/>
+
+        <Button
+            android:id="@+id/btnNext"
+            android:text="⏭"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
 
 </LinearLayout>
